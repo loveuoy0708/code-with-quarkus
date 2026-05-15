@@ -24,26 +24,13 @@
 </head>
 <body>
 
-    <!-- 헤더 (Navbar) -->
-   <!-- <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="http://localhost:8080">League of Legends</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="#">뉴스</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">챔피언</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">다운로드</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">로그인</a></li>
-                    <li class="nav-item"><a class="nav-link" href="https://www.leagueoflegends.com/ko-kr/" target="_blank">공식웹사이트</a></li>
-                </ul>
-            </div>
-        </div>
-    </nav>-->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark">
   <div class="container-fluid">
+    <img src="/image/yo.jpg" alt="" width="30" height="24">
+<!-- [변경] "Navbar" 텍스트 → 다크/라이트 토글 버튼-->
+<button class="btn border-0" id="themeToggleBtn" onclick="toggleTheme()">
+DARK
+</button>
     <a class="navbar-brand" href="#">Navbar</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
@@ -57,6 +44,9 @@
           <a class="nav-link" href="#">챔피온</a>
            <li class="nav-item">
           <a class="nav-link" href="main_page_sub/download.html">다운로드</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/login">로그인</a>
         </li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
