@@ -34,10 +34,23 @@ getClass().getClassLoader().getResourceAsStream(htmlPath);
 @Path("/login") // 경로 명시
 @Produces(MediaType.TEXT_HTML) // 서버 → 클라
 public Response loginPage() {
-InputStream html = getClass()
-.getClassLoader()
-.getResourceAsStream("META-INF/resources/login/login.html");
-return Response.ok(html).build();
+
+    String loginUser = context.session().get("loginUser");
+
+    if (loginUser != null) {
+        return Response
+                .seeOther(URI.create("/after_login"))
+                .build();
+        }
+
+    InputStream html = getClass()
+        .getClassLoader()
+        .getResourceAsStream("META-INF/resources/login/login.html");
+    
+    return Response.ok(html)
+            .header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+            .header("Pragma", "no-cache")
+            .build();
 }
 
 
