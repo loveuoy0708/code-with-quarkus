@@ -24,10 +24,12 @@ import jakarta.persistence.Column;
 public class User extends PanacheEntity {
     public String username;
     public String password;        // SHA-256 해시값 저장
+   
     @Column(unique = true)         // 이메일 중복 방지
-
-public String email;// 이메일 중복 방지
+    public String email;// 이메일 중복 방지
     public String phone;           // 연락처
+    
+    public String profileImage;
 // 아이디로 조회
     public static User findByUsername(String username) {
         return find("username", username).firstResult();
@@ -37,6 +39,8 @@ public String email;// 이메일 중복 방지
         return find("email", email).firstResult();
     }
 }
+
+
          
 
 

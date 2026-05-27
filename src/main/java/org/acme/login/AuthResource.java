@@ -8,6 +8,12 @@ import java.io.InputStream;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import io.vertx.ext.web.RoutingContext;
+import org.jboss.resteasy.reactive.RestForm;
+import org.jboss.resteasy.reactive.multipart.FileUpload;
+import java.util.Map;
+import java.util.UUID;
+import java.nio.file.Paths;
+
 
 @Path("/") // 기본 경로가 최상위 /
 public class AuthResource {
@@ -61,19 +67,19 @@ RoutingContext context; // Quarkus Vert.x 세션 접근
 @Transactional
 @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 public Response loginCheck(
-@FormParam("username") String username,
-@FormParam("password") String password) {
-User user = User.findByUsername(username); // 아이디 조회
-if (user == null || !user.password.equals(password)) { // 존재 확인
-return Response
-.seeOther(URI.create("/login?error=1"))
-.build();
-}
+        @FormParam("username") String username,
+        @FormParam("password") String password) {
+    User user = User.findByUsername(username); // 아이디 조회
+    if (user == null || !user.password.equals(password)) { // 존재 확인
+        return Response
+            .seeOther(URI.create("/login?error=1"))
+            .build();
+    }
 // 세션에 로그인 정보 저장
-context.session().put("loginUser", username);
-return Response
-.seeOther(URI.create("/after_login"))
-.build();
+    context.session().put("loginUser", username);
+    return Response
+        .seeOther(URI.create("/after_login"))
+        .build();
 }
 
 @GET
@@ -81,48 +87,50 @@ return Response
 @Produces(MediaType.TEXT_HTML)
 public Response afterLogin() {
 // 세션 체크: 로그인 안 한 사용자 차단
-String loginUser = context.session().get("loginUser");
+    String loginUser = context.session().get("loginUser");
 // 세션 내용 로그 출력
-System.out.println("=== 세션 ID : " + context.session().id());
-System.out.println("=== loginUser : " + loginUser);
-if (loginUser == null) {
+    System.out.println("=== 세션 ID : " + context.session().id());
+    System.out.println("=== loginUser : " + loginUser);
+    if (loginUser == null) {
 // 세션 없음 → 로그인 페이지로 강제 이동
-return Response
-.seeOther(URI.create("/login"))
-.build();
-}
+        return Response
+            .seeOther(URI.create("/login"))
+            .build();
+    }
 // 세션 있음 → 로그인 후 HTML 반환
-InputStream html = getClass()
-.getClassLoader()
-.getResourceAsStream("META-INF/resources/login/main_after_login.html");
-return Response.ok(html).build();
+    InputStream html = getClass()
+        .getClassLoader()
+        .getResourceAsStream("META-INF/resources/login/main_after_login.html");
+    return Response.ok(html).build();
 }
+
 @GET
 @Path("/logout")
 public Response logout() {
 // 로그아웃 전 세션 정보 출력
-System.out.println("=== 로그아웃 전 세션 ID : " + context.session().id());
-System.out.println("=== 로그아웃 전 loginUser : " + context.session().get("loginUser"));
+    System.out.println("=== 로그아웃 전 세션 ID : " + context.session().id());
+    System.out.println("=== 로그아웃 전 loginUser : " + context.session().get("loginUser"));
 // 세션 전체 삭제
-context.session().destroy();
+    context.session().destroy();
 // 로그아웃 후 세션 정보 출력
-System.out.println("=== 로그아웃 후 세션 ID : " + context.session().id());
-System.out.println("=== 로그아웃 후 loginUser : " + context.session().get("loginUser"));
-return Response
-.seeOther(URI.create("/"))
-.build();
+    System.out.println("=== 로그아웃 후 세션 ID : " + context.session().id());
+    System.out.println("=== 로그아웃 후 loginUser : " + context.session().get("loginUser"));
+    return Response
+            .seeOther(URI.create("/"))
+            .build();
 }
+
 // AuthResource.java 아래새로추가
 @GET
 @Path("/register")
 @Produces(MediaType.TEXT_HTML)
 public Response registerPage() {
-InputStream html = getClass()
-.getClassLoader()
-.getResourceAsStream(
-"META-INF/resources/login/register.html");
-return Response.ok(html).build();
-}
+    InputStream html = getClass()
+        .getClassLoader()
+        .getResourceAsStream(
+            "META-INF/resources/login/register.html");
+        return Response.ok(html).build();
+    }
 
 @POST
 @Path("/register_check")
@@ -169,4 +177,109 @@ public Response registerSuccess() {
 "META-INF/resources/login/register_success.html");
     return Response.ok(html).build();
 }
+
+@GET
+@Path("/profile")
+@Produces(MediaType.TEXT_HTML)
+public Response profilePage() {
+// ①세션체크(로그인안한사용자차단)
+    String loginUser = context.session().get("loginUser");
+    if (loginUser == null) {
+        return Response
+            .seeOther(URI.create("/login"))
+            .build();
+    }   
+
+    // ②DB에서사용자정보조회
+User user = User.findByUsername(loginUser);
+// ③세션에사용자정보저장(HTML에서활용)
+context.session().put("userEmail", user.email);
+context.session().put("userPhone", user.phone);
+context.session().put("profileImage",
+    user.profileImage != null ? user.profileImage : "default.png");
+// ④프로필페이지반환
+InputStream html = getClass()
+.getClassLoader()
+.getResourceAsStream(
+"META-INF/resources/login/profile.html");
+return Response.ok(html).build();
+}
+
+@GET
+@Path("/profile/info")
+@Produces(MediaType.APPLICATION_JSON)
+public Response profileInfo() {
+    // 세션체크
+    String loginUser= context.session().get("loginUser");
+    if (loginUser== null) {
+        return Response.status(401).build();
+    }   
+// DB 조회
+User user= User.findByUsername(loginUser);
+// JSON 응답
+    return Response.ok(
+        Map.of(
+            "username",     user.username,
+            "email",        user.email != null ? user.email : "",
+            "phone",        user.phone != null ? user.phone : "",
+            "profileImage", user.profileImage!= null ? user.profileImage: ""
+        )
+    ).build();
+}
+
+@POST
+    @Path("/profile/upload")
+    @Transactional
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    public Response profileUpload(
+        @RestForm("profileImage") FileUpload file) {
+// ①세션체크
+        String loginUser = context.session().get("loginUser");
+        if (loginUser== null) {
+            return Response
+                .seeOther(URI.create("/login"))
+                .build();
+        }
+
+        try {
+// ②확장자검사
+            String original = file.fileName();
+            String ext= original.substring(
+                original.lastIndexOf('.') + 1).toLowerCase();
+            if (!ext.matches("jpg|jpeg|png|gif|webp")) {
+                return Response
+                    .seeOther(URI.create("/profile?error=invalid_type"))
+                    .build();
+            }
+
+// ③파일크기검사(5MB)
+    if (file.size() > 5 * 1024 * 1024) {
+        return Response
+            .seeOther(URI.create("/profile?error=too_large"))
+            .build();
+    }
+    
+// ④UUID 파일명생성+ 저장
+    String newFileName= UUID.randomUUID() + "." + ext;
+    java.nio.file.Path uploadDir= Paths.get(
+        "src/main/resources/META-INF/resources/uploads/profile");
+    java.nio.file.Files.createDirectories(uploadDir);
+    java.nio.file.Files.copy(file.uploadedFile(),
+        uploadDir.resolve(newFileName),
+        java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+
+// ⑤DB 업데이트
+    User user= User.findByUsername(loginUser);
+    user.profileImage= newFileName;
+
+    return Response
+        .seeOther(URI.create("/profile"))
+        .build();
+
+    } catch (Exception e) {
+        return Response
+            .seeOther(URI.create("/profile?error=upload_fail"))
+            .build();
+        }
+    }
 }
