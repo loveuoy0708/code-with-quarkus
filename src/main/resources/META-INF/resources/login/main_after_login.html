@@ -15,9 +15,8 @@
     <link rel="stylesheet" href="css/main.css">
     <script>
         window.onload = function() {
-        
-            alert("메인 페이지 로딩 완료");
-        }
+            showToast('메인 페이지 로딩 완료');
+       }
        </script> 
 </head>
 <body>
@@ -43,18 +42,18 @@
            <li class="nav-item">
           <a class="nav-link" href="main_page_sub/download.html">다운로드</a>
         </li>
-        <!-- 기존 로그아웃 버튼 앞에 추가 -->
-            <li class="nav-item">
-                <a class="nav-link" href="/profile">
-                프로필
-            </a>
+        <!--기존프로필버큰수정-->
+        <a class="nav-link" href="/profile"
+            id="profileNavLink"
+            data-bs-toggle="tooltip"
+            data-bs-placement="bottom">프로필</a>
         </li>
         <!-- 기존 로그인 버튼 제거, 로그아웃 버튼 추가 -->
         <li class="nav-item">
             <a class="nav-link btn btn-outline-danger btn-sm px-3"
             href="/logout">로그아웃</a>
         </li>
-
+     
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             외부웹사이트
@@ -266,6 +265,20 @@ allowfullscreen>
 
 <script src="js/search.js"></script>
 
-
+<!--토스트 컨테이너 </body> 바로 위에 추가-->
+<div class="toast-container position-fixed
+        bottom-0 end-0 p-3" style="z-index:9999">
+    <div id="liveToast" class="toast align-items-center
+        text-white bg-success border-0" role="alert">
+    <div class="d-flex">
+        <div class="toast-body" id="toastBody">
+            메시지
+        </div>
+        <button type="button"
+            class="btn-close btn-close-white me-2 m-auto"
+            data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
 </body>
 </html>

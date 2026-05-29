@@ -105,19 +105,13 @@ public Response afterLogin() {
 }
 
 @GET
-@Path("/logout")
-public Response logout() {
-// 로그아웃 전 세션 정보 출력
-    System.out.println("=== 로그아웃 전 세션 ID : " + context.session().id());
-    System.out.println("=== 로그아웃 전 loginUser : " + context.session().get("loginUser"));
-// 세션 전체 삭제
+@Path("/logout") // 기존에는로그아웃하면항상메인이동
+public Response logout(@QueryParam("next") String next) {  // ← next 파라미터추가
     context.session().destroy();
-// 로그아웃 후 세션 정보 출력
-    System.out.println("=== 로그아웃 후 세션 ID : " + context.session().id());
-    System.out.println("=== 로그아웃 후 loginUser : " + context.session().get("loginUser"));
+    String redirect = (next != null && next.equals("login")) ? "/login" : "/";
     return Response
-            .seeOther(URI.create("/"))
-            .build();
+        .seeOther(URI.create(redirect))  // ← ?next=login 이면/login으로
+        .build();
 }
 
 // AuthResource.java 아래새로추가
@@ -191,18 +185,18 @@ public Response profilePage() {
     }   
 
     // ②DB에서사용자정보조회
-User user = User.findByUsername(loginUser);
+    User user = User.findByUsername(loginUser);
 // ③세션에사용자정보저장(HTML에서활용)
-context.session().put("userEmail", user.email);
-context.session().put("userPhone", user.phone);
-context.session().put("profileImage",
-    user.profileImage != null ? user.profileImage : "default.png");
+    context.session().put("userEmail", user.email);
+    context.session().put("userPhone", user.phone);
+    context.session().put("profileImage",
+        user.profileImage != null ? user.profileImage : "default.png");
 // ④프로필페이지반환
-InputStream html = getClass()
-.getClassLoader()
-.getResourceAsStream(
-"META-INF/resources/login/profile.html");
-return Response.ok(html).build();
+    InputStream html = getClass()
+        .getClassLoader()
+        .getResourceAsStream(
+        "META-INF/resources/login/profile.html");
+    return Response.ok(html).build();
 }
 
 @GET
@@ -282,4 +276,65 @@ User user= User.findByUsername(loginUser);
             .build();
         }
     }
+
+@POST
+@Path("/profile/update")
+@Transactional
+@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+public Response profileUpdate(
+    @FormParam("email") String email,
+    @FormParam("phone") String phone) {
+// ①세션체크
+    String loginUser = context.session().get("loginUser");
+    if (loginUser == null) {
+        return Response
+            .seeOther(URI.create("/login"))
+            .build();
+    }
+
+// ②이메일중복체크(본인제외)
+    User found = User.findByEmail(email);
+    if (found != null && !found.username.equals(loginUser)) {
+        return Response
+            .seeOther(URI.create("/profile?error=duplicate_email"))
+            .build();
+    }
+// ③DB 업데이트
+    User user = User.findByUsername(loginUser);
+    user.email = email;
+    user.phone = phone;
+
+    return Response
+        .seeOther(URI.create("/profile?success=updated"))
+        .build();
+}
+
+@POST
+@Path("/profile/password")
+@Transactional
+@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+public Response profilePassword(
+    @FormParam("currentPassword") String currentPassword,
+    @FormParam("newPassword")     String newPassword) {
+// ①세션체크
+    String loginUser= context.session().get("loginUser");
+    if (loginUser== null) {
+        return Response
+            .seeOther(URI.create("/login"))
+            .build();
+    }
+// ②현재비밀번호확인(해시값비교)
+    User user= User.findByUsername(loginUser);
+    if (!user.password.equals(currentPassword)) {
+        return Response
+            .seeOther(URI.create("/profile?error=wrong_password"))
+            .build();
+    }
+// ③새비밀번호로DB 업데이트
+    user.password= newPassword;
+
+    return Response
+    .seeOther(URI.create("/profile?success=password_changed"))
+    .build();
+}
 }
